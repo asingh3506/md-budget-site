@@ -113,7 +113,7 @@ export default function Header() {
 
           {/* MBTSA Dashboard button */}
           <a
-            href="deep-dive-stage-budget.netlify.app"
+            href="https://deep-dive-stage-budget.netlify.app"
             target="_blank"
             rel="noopener noreferrer"
             style={{
