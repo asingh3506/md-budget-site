@@ -5,9 +5,9 @@ export default function MarylandFiscalJourneyChart() {
     <iframe
       src="/fiscal-journey.html"
       width="100%"
-      height="860"
+      height="100%"
       frameBorder="0"
-      style={{ border: "none", display: "block", width: "100%", height: "100%", minHeight: 860 }}
+      style={{ border: "none", display: "block", width: "100%", height: "100%" }}
       title="Maryland's Fiscal Journey"
       loading="eager"
     />

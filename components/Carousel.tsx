@@ -431,6 +431,7 @@ export default function Carousel() {
           scrollBehavior: "smooth",
           cursor: "grab",
           WebkitOverflowScrolling: "touch",
+          height: "560px",
         } as React.CSSProperties}
       >
         {SLIDES.map((s, i) => (
@@ -440,18 +441,19 @@ export default function Carousel() {
               flexShrink: 0,
               width: "100%",
               scrollSnapAlign: "start",
+              height: "100%",
             }}
           >
             {s.fullWidth ? (
-              /* Full-width layout — MD Fiscal Journey (iframe is 860px tall) */
-              <div style={{ background: "#FAF6EE" }}>
-                <div style={{ height: 860 }}>
+              /* Full-width layout — MD Fiscal Journey */
+              <div style={{ background: "#FAF6EE", height: "100%" }}>
+                <div style={{ height: "100%" }}>
                   {s.viz}
                 </div>
               </div>
             ) : (
               /* Two-column: chart + commentary sidebar */
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 0, minHeight: 440 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 0, height: "100%" }}>
                 <div style={{ padding: "24px 20px 20px 24px", background: "#fafafa" }}>
                   {s.viz}
                 </div>
