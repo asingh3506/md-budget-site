@@ -54,7 +54,7 @@ const SLIDES: Slide[] = [
       "Maryland's $70.8B FY2027 budget flows from 6 revenue streams through 3 fund types into 30+ agencies. Federal grants alone account for $17.7B — the largest single source.",
     source: "MD DBM Sankey_Data.xlsx — FY2025 / FY2026 / FY2027 revenue → fund type → agency",
     citations: [
-      { label: "FY2027 Budget Highlights · pp.17–24 — Revenue by Fund Type & Agency Allocations", url: "https://dbm.maryland.gov/budget/Documents/operbudget/2026/proposed/FY2026MarylandStateBudgetHighlights.pdf#page=17" },
+      { label: "FY2027 Budget Highlights · pp.17–24 — Revenue by Fund Type & Agency Allocations", url: "https://dbm.maryland.gov/budget/Documents/operbudget/2027/proposed/FY2027MarylandStateBudgetHighlights.pdf#page=17" },
     ],
     viz: <SankeyChart />,
     accentColor: "#6B3FA0",
@@ -122,7 +122,7 @@ const SLIDES: Slide[] = [
       "Maryland's Rainy Day Fund dropped 96% in just 3 years — from $3.6B (FY2022) to $132M (FY2025). The General Fund balance turned negative (−$905M) for the first time in modern history.",
     source: "Reserve Fund: ACFR 2023 p.20  |  ACFR 2024 pp.18–19  |  ACFR 2025 pp.17–22",
     citations: [
-      { label: "ACFR 2025 · pp.17–22 — Balance Sheet, Governmental Funds — Reserve Fund balance (audited)", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/md/reports/financial/2025-acfr-accessible.pdf#page=22" },
+      { label: "ACFR 2025 · pp.17–22 — Balance Sheet, Governmental Funds — Reserve Fund balance (audited)", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/md/reports/financial/2025-acfr-accessible.pdf#page=33" },
       { label: "ACFR 2024 · pp.18–19 — Balance Sheet, Governmental Funds — Reserve Fund balance (audited)", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/md/reports/financial/2024-acfr-accessible.pdf#page=19" },
       { label: "ACFR 2023 · p.20 — Balance Sheet, Governmental Funds — Reserve Fund balance (audited)", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/md/reports/financial/2023-acfr-accessible.pdf#page=20" },
     ],
@@ -135,7 +135,7 @@ const SLIDES: Slide[] = [
       "The Maryland Department of Health grew 84% over 10 years at a 7% compound annual rate — driven by Medicaid enrollment, DDA caseloads, and behavioral health demand that outpaced any other state function.",
     source: "ACFR 2025  ·  p.165  |  Expenses by Function — Last Ten Fiscal Years (audited)",
     citations: [
-      { label: "ACFR 2025 · p.165 — Expenses by Function, Last Ten Fiscal Years — Health row (audited)", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/md/reports/financial/2025-acfr-accessible.pdf#page=165" },
+      { label: "ACFR 2025 · p.165 — Expenses by Function, Last Ten Fiscal Years — Health row (audited)", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/md/reports/financial/2025-acfr-accessible.pdf#page=181" },
     ],
     viz: <HealthSpendingChart />,
     accentColor: "#C41230",

@@ -58,6 +58,22 @@ export default function ChartFrame({ title, deck, source, children, compact }: P
       {/* Chart body */}
       <div>{children}</div>
 
+      {/* Source line */}
+      {source && (
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 10,
+            color: "#9B9B9B",
+            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            borderTop: "1px solid #EEEEEE",
+            paddingTop: 6,
+            lineHeight: 1.5,
+          }}
+        >
+          Source: {source}
+        </div>
+      )}
     </div>
   );
 }
