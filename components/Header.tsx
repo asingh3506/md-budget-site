@@ -3,9 +3,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { label: "Home",         href: "/" },
-  { label: "Methodology",  href: "/methodology" },
-  { label: "Guardrails",   href: "/guardrails" },
+  { label: "Home",                href: "/" },
+  { label: "Methodology",         href: "/methodology" },
+  { label: "Guardrails",          href: "/guardrails" },
+  { label: "Deep-Dive Dashboard", href: "/deep-dive" },
 ];
 
 export default function Header() {
@@ -107,37 +108,22 @@ export default function Header() {
           })}
         </nav>
 
-        {/* Right — Dashboard link + FY2027 badge */}
+        {/* Right — FY2027 badge */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-
-          {/* MBTSA Dashboard button */}
-          <a
-            href="https://deep-dive-stage-budget.netlify.app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <span
             style={{
-              background: '#802cd7',
-              color: '#fff',
-              padding: '6px 14px',
-              borderRadius: 7,
-              fontSize: 12,
-              fontWeight: 700,
-              textDecoration: 'none',
-              letterSpacing: '0.02em',
-              fontFamily: 'var(--mono)',
-              whiteSpace: 'nowrap',
-              border: '1.5px solid #6321a5',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background = '#6321a5';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background = '#802cd7';
+              fontFamily: "var(--mono)",
+              fontSize: 9,
+              color: "var(--text-mute)",
+              letterSpacing: "0.06em",
+              padding: "3px 8px",
+              border: "1px solid var(--line)",
+              borderRadius: 4,
+              background: "var(--line-soft)",
             }}
           >
-            Deep-Dive Dashboard ↗
-          </a>
-
+            FY2027
+          </span>
         </div>
       </div>
 

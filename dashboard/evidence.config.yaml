@@ -1,0 +1,19 @@
+plugins:
+  components:
+    '@evidence-dev/core-components': {}
+  datasources:
+    '@evidence-dev/duckdb': {}
+appearance:
+  default: light
+  switcher: false
+  theme:
+    # NXT brand palette — matches globals.css in the main Next.js site
+    colorPalette:
+      - 6321a5   # nxt-grape (primary)
+      - 802cd7   # nxt-blue-violet
+      - b376f6   # nxt-lavender
+      - 551c8e   # nxt-violet
+      - E8A317   # md-flag gold
+      - CE1126   # md-flag red
+      - 2EAD6B   # green
+      - c9a8f0   # light lavender

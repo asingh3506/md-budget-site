@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:dashboard": "cd dashboard && npm run dev",
     "prebuild": "npm run validate:data",
     "build": "next build",
+    "build:dashboard": "cd dashboard && npm run build && node scripts/copy-dashboard.mjs",
     "start": "next start",
     "lint": "eslint",
     "ingest": "node data/warehouse/ingest.mjs",
