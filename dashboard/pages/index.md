@@ -4,9 +4,12 @@ sidebar_link: false
 ---
 
 <script>
-    if (typeof window !== 'undefined' && window.location.pathname === '/') {
-        window.location.replace('/budget-office');
-    }
+    import { base } from '$app/paths';
+    import { goto } from '$app/navigation';
+    import { onMount } from 'svelte';
+    onMount(() => {
+        goto(`${base}/budget-office`, { replaceState: true });
+    });
 </script>
 
 Redirecting to [Budget Office](/budget-office)...

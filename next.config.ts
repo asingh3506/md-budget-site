@@ -1,17 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async headers() {
+  async rewrites() {
     return [
       {
         source: "/deep-dive",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value:
-              "frame-src https://deep-dive-stage-budget.netlify.app https://*.netlify.app;",
-          },
-        ],
+        destination: "/deep-dive/budget-office/index.html",
+      },
+      {
+        source: "/deep-dive/:path*",
+        destination: "/deep-dive/:path*/index.html",
       },
     ];
   },

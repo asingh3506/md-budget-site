@@ -3,6 +3,8 @@ plugins:
     '@evidence-dev/core-components': {}
   datasources:
     '@evidence-dev/duckdb': {}
+deployment:
+  basePath: /deep-dive
 appearance:
   default: light
   switcher: false
