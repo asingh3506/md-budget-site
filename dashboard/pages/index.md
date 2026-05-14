@@ -1,13 +1,13 @@
 ---
-title: Budget Office
+title: Deep-Dive
 sidebar_link: false
 ---
 
 <script>
     import { base } from '$app/paths';
     import { goto } from '$app/navigation';
-    import { onMount } from 'svelte';
-    onMount(() => {
+    import { onMount as mount } from 'svelte';
+    mount(() => {
         goto(`${base}/budget-office`, { replaceState: true });
     });
 </script>

@@ -167,3 +167,8 @@ footer {
 .echarts-for-react svg {
     background: transparent !important;
 }
+
+/* Hide the sticky sidebar home link (duplicate of unified header nav) */
+aside a.sticky {
+    display: none !important;
+}
