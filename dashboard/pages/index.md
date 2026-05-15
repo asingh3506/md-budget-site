@@ -242,11 +242,6 @@ cross join prior_year py
         <div style="font-size:10px; color:#6B7280; line-height:1.5;">Unusual spend patterns, statistical outliers and flagged programs</div>
         <div style="font-size:10px; color:#802cd7; font-weight:700; margin-top:8px;">Open →</div>
     </a>
-    <a href="/ask-questions" style="display:block; background:var(--nxt-surface); border:0.5px solid var(--nxt-border); border-left:4px solid #802cd7; border-radius:10px; padding:16px 18px; text-decoration:none; box-shadow:0 1px 0 rgba(99,33,165,0.03);">
-        <div style="font-size:13px; font-weight:700; color:#211030; margin-bottom:4px;">💬 Ask Questions</div>
-        <div style="font-size:10px; color:#6B7280; line-height:1.5;">AI-powered natural language Q&A over the full budget dataset</div>
-        <div style="font-size:10px; color:#802cd7; font-weight:700; margin-top:8px;">Open →</div>
-    </a>
 </div>
 
 <div style="font-size:9px; color:#9CA3AF; text-align:center; font-family:'JetBrains Mono',monospace; margin-top:32px; padding-top:16px; border-top:1px solid #e2d9f3;">
