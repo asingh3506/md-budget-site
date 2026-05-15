@@ -168,16 +168,6 @@ footer {
     background: transparent !important;
 }
 
-/* Push content below the sticky unified header */
-.layout,
-main,
-aside {
-    padding-top: 70px !important;
-}
-
-aside > div > div.fixed {
-    top: 80px !important;
-}
 
 /* Hide "agencies" and "project details" sub-items in sidebar */
 aside span.group.inline-block.py-1.capitalize {

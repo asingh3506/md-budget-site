@@ -4,7 +4,7 @@ const config = {
 		prerender: {
 			handleHttpError: ({ path }) => {
 				// Allow links to the main Next.js site (outside Evidence's base path)
-				if (path === '/' || path === '/methodology' || path === '/guardrails') {
+				if (path === '/' || path === '/methodology' || path === '/guardrails' || path === '/favicon.ico') {
 					return;
 				}
 				throw new Error(`404: ${path}`);
