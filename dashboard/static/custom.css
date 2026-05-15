@@ -169,18 +169,7 @@ footer {
 }
 
 
-/* Hide "agencies" and "project details" sub-items in sidebar */
-aside span.group.inline-block.py-1.capitalize {
-    display: none !important;
-}
-
-/* Hide the duplicate "budget office" section (2nd section) */
-aside > div > div.flex.flex-col:nth-child(2) {
-    display: none !important;
-}
-
-/* Remove extra padding from Technology and IT Projects sections */
-aside > div > div.flex.flex-col:nth-child(3),
-aside > div > div.flex.flex-col:nth-child(4) {
-    padding-bottom: 0 !important;
+/* Offset sidebar and content below the fixed unified header */
+aside div.fixed {
+    top: 70px !important;
 }
