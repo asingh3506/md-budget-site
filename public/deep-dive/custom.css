@@ -83,11 +83,15 @@ aside[class*="sidebar"] {
     font-weight: 600 !important;
 }
 
-/* Unified header — match main site (white) */
+/* Header — white background to match main site */
 header.unified-header {
     background-color: #ffffff !important;
-    border-bottom: 1px solid var(--line) !important;
+    border-bottom: 1px solid #E5E7EB !important;
     color: #211030 !important;
+}
+
+header.unified-header a {
+    color: #6321a5 !important;
 }
 
 /* Scrollbar */
