@@ -44,9 +44,9 @@ next-env.d.ts
 dashboard/node_modules
 dashboard/build
 dashboard/.svelte-kit
-dashboard/.evidence/template/.svelte-kit
-dashboard/.evidence/template/node_modules
-dashboard/.evidence/template/src
-dashboard/.evidence/template/package.json
-dashboard/.evidence/template/package-lock.json
-dashboard/.evidence/template/*.config.*
+dashboard/.evidence
+dashboard/.claude
+
+
+# Data file — push from local machine (env proxy blocks LFS uploads)
+dbt-sql/mbtsa_work.duckdb

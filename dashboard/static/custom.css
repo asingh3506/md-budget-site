@@ -83,11 +83,16 @@ aside[class*="sidebar"] {
     font-weight: 600 !important;
 }
 
-/* Unified header — match main site (white) */
-header.unified-header {
-    background-color: #ffffff !important;
-    border-bottom: 1px solid var(--line) !important;
+/* Header — light purple, dark readable text */
+header {
+    background-color: #ede5f8 !important;
+    border-bottom: 2px solid #c9a8f0 !important;
     color: #211030 !important;
+    position: relative !important;
+}
+
+header a {
+    color: #6321a5 !important;
 }
 
 /* Scrollbar */
@@ -164,8 +169,7 @@ footer {
     background: transparent !important;
 }
 
-
-/* Offset sidebar and content below the fixed unified header */
-aside div.fixed {
-    top: 70px !important;
+/* Hide Evidence auto-nav */
+nav[class*="sidebar"], aside[class*="sidebar"] {
+    display: none !important;
 }

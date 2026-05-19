@@ -3,14 +3,16 @@
     import '../app.css';
     import { onMount } from 'svelte';
     import { page } from '$app/stores';
-    import { base } from '$app/paths';
     import { beforeNavigate } from '$app/navigation';
     import { EvidenceDefaultLayout } from '@evidence-dev/core-components';
     import { showQueries } from '@evidence-dev/component-utilities/stores';
     export let data;
 
+    // Escape Evidence's SPA router for links into the parent Next.js site
     beforeNavigate(({ to, cancel }) => {
-        if (to?.url && to.url.pathname !== $page.url.pathname) {
+        if (!to?.url) return;
+        const p = to.url.pathname;
+        if (p === '/' || p === '/methodology' || p === '/guardrails') {
             cancel();
             window.location.href = to.url.href;
         }
@@ -19,140 +21,95 @@
     onMount(() => {
         showQueries.set(false);
         document.title = 'Maryland Budget Intel Tool';
-        document.querySelectorAll('link[rel="icon"][href*="/deep-dive/"], link[rel="apple-touch-icon"][href*="/deep-dive/"]').forEach(el => el.remove());
     });
 
-    const NAV = [
+    const PARENT_NAV = [
         { label: 'Home',        href: '/' },
-        { label: 'Deep-Dive',   href: '/deep-dive', match: '/deep-dive' },
+        { label: 'Deep-Dive',   href: '/deep-dive', active: true },
         { label: 'Methodology', href: '/methodology' },
         { label: 'Guardrails',  href: '/guardrails' },
     ];
+
+    let chatOpen = false;
+    $: pageSlug = $page.url.pathname.replace(/\//g, '-').replace(/^-/, '') || 'home';
+    $: chatSrc = `https://mdbudget-ask-questions.streamlit.app?page=${pageSlug}&embed=true`;
 </script>
 
 <svelte:head>
-    <title>Maryland Budget Intel Tool</title>
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="stylesheet" href="{base}/custom.css"/>
+    <link rel="stylesheet" href="/deep-dive/custom.css"/>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --nxt-deep: #211030;
-            --nxt-purple: #6321a5;
-            --nxt-tint: #802CD7;
-            --nxt-pink: #ede5f8;
-            --nxt-lavender: #b376f6;
-            --text-mute: #6B7280;
-            --line: #E5E7EB;
-            --mono: 'JetBrains Mono', monospace;
-            --font: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
-        }
-    </style>
 </svelte:head>
-
-<!-- Unified header matching main site -->
-<header class="unified-header">
-    <div class="header-inner">
-        <img src="{base}/logo.png" alt="Maryland state crest" width="38" height="42" style="flex-shrink:0; display:block;" />
-        <div style="display:flex; flex-direction:column; gap:0;">
-            <span style="font-size:15px; font-weight:900; letter-spacing:-0.4px; color:var(--nxt-deep); font-family:Georgia,serif; line-height:1.1;">
-                Maryland Budget Intel Tool
-            </span>
-            <span style="font-family:var(--mono); font-size:9px; color:var(--text-mute); letter-spacing:0.06em; line-height:1.2;">
-                Fiscal Analysis Tool
-            </span>
-        </div>
-        <nav style="display:flex; gap:2px; margin-left:24px;">
-            {#each NAV as item}
-                {@const isDeepDive = item.href === '/deep-dive'}
-                {@const active = isDeepDive}
-                <a
-                    href={isDeepDive ? $page.url.pathname : item.href}
-                    style="font-size:13px; font-weight:600; color:{active ? 'var(--nxt-deep)' : 'var(--text-mute)'}; text-decoration:none; padding:7px 14px; border-radius:8px; background:{active ? 'var(--nxt-pink)' : 'transparent'}; border-bottom:2px solid {active ? 'var(--nxt-purple)' : 'transparent'}; transition:all 0.18s; white-space:nowrap;"
-                >
-                    {item.label}
-                </a>
-            {/each}
-        </nav>
-        <div style="margin-left:auto; display:flex; align-items:center; gap:16px;">
-        </div>
-    </div>
-    <!-- Maryland flag stripe -->
-    <div style="display:flex; height:4px; width:100%;">
-        <div style="flex:1; background:#CE1126;"></div>
-        <div style="flex:1; background:#E8A317;"></div>
-        <div style="flex:1; background:#000000;"></div>
-        <div style="flex:1; background:#ffffff; border-bottom:1px solid var(--line);"></div>
-    </div>
-</header>
-<div class="header-spacer"></div>
 
 <EvidenceDefaultLayout
     {data}
-    title="MBTSA"
-    logo="{base}/maryland-logo.png"
-    homePageName="Budget Office"
+    title="MBIT"
+    logo="/maryland-logo.png"
+    homePageName="Home"
     neverShowQueries={true}
     maxWidth="1200px"
-    hideHeader={true}
-    builtWithEvidence={false}
+    hideBreadcrumbs={true}
 >
+    <div slot="header">
+        <nav class="parent-nav">
+            {#each PARENT_NAV as item}
+                <a href={item.href} class:active={item.active}>{item.label}</a>
+            {/each}
+        </nav>
+        <div style="background:#ede5f8; height:3px; width:100%; border-bottom:2px solid #c9a8f0;"></div>
+    </div>
     <slot slot="content" />
     <div slot="footer">
-        <footer class="unified-footer">
-            <p style="font-family:var(--mono); font-size:9px; color:var(--text-mute); text-transform:uppercase; letter-spacing:0.5px;">
-                Maryland Budget Intel Tool
-            </p>
-            <div style="font-family:var(--mono); font-size:9px; color:var(--text-mute); letter-spacing:0.05em; text-align:right;">
-                Created by Aarushi Singh, Nadvi Haque, Priyanshu Gupta, and James Van Doorn
-            </div>
-        </footer>
+        <p style="font-size: 0.7rem; color: #6B7280; text-align: center; padding: 16px 0; border-top: 1px solid #e2d9f3; margin-top: 32px; font-family:'IBM Plex Sans',sans-serif;">
+            State of Maryland · Operating budget · Data: FY2017–FY2027 · TBM v5.0.1
+        </p>
     </div>
 </EvidenceDefaultLayout>
 
+<!-- Floating chat button -->
+<button
+    class="chat-fab"
+    on:click={() => chatOpen = !chatOpen}
+    aria-label="Open budget assistant"
+>
+    {#if chatOpen}
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    {:else}
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Ask AI</span>
+    {/if}
+</button>
+
+<!-- Slide-in chat panel -->
+{#if chatOpen}
+    <div class="chat-panel" role="complementary" aria-label="Budget assistant">
+        <div class="chat-panel-header">
+            <span class="chat-panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     style="margin-right:6px;vertical-align:-1px">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Budget Assistant
+            </span>
+            <span class="chat-panel-page">{pageSlug.replace(/-/g, ' ')}</span>
+        </div>
+        <iframe src={chatSrc} title="Budget Assistant" frameborder="0" />
+    </div>
+{/if}
+
 <style>
-    .unified-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        background: #ffffff;
-        border-bottom: 1px solid var(--line);
-        box-shadow: 0 1px 6px rgba(78,19,75,0.06);
-    }
-    .header-spacer {
-        height: 66px;
-    }
-    .header-inner {
-        display: flex;
-        align-items: center;
-        padding: 10px 28px;
-        max-width: 1600px;
-        margin: 0 auto;
-        gap: 14px;
-    }
-    .unified-footer {
-        background: #fff;
-        border-top: 1px solid var(--line);
-        padding: 20px 32px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    /* Hide Evidence's own header since we provide our own */
-    :global(header.evidence-header),
-    :global([class*="EvidenceHeader"]),
-    :global(nav.sidebar + header),
-    :global(.layout > header:first-child) {
-        display: none !important;
-    }
-
     :global(h1), :global(h2), :global(h3), :global(h4) {
-        font-family: 'IBM Plex Sans', sans-serif !important;
+        font-family: 'Montserrat', sans-serif !important;
         color: #231F20 !important;
     }
 
@@ -167,18 +124,10 @@
         min-width: 170px !important;
     }
 
-    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n + 1)) {
-        border-left-color: #C8122C !important;
-    }
-    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n + 2)) {
-        border-left-color: #FFC838 !important;
-    }
-    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n + 3)) {
-        border-left-color: #3B7DD8 !important;
-    }
-    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n)) {
-        border-left-color: #2EAD6B !important;
-    }
+    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n + 1)) { border-left-color: #C8122C !important; }
+    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n + 2)) { border-left-color: #FFC838 !important; }
+    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n + 3)) { border-left-color: #3B7DD8 !important; }
+    :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top:nth-of-type(4n))     { border-left-color: #2EAD6B !important; }
 
     :global(div.inline-block.font-sans.pt-2.pb-3.pl-0.mr-3.items-center.align-top > p.text-sm) {
         color: #6B5F57 !important;
@@ -204,7 +153,126 @@
         margin: 16px 0 !important;
     }
 
-    :global(th) {
-        border-bottom: 2px solid #C8122C !important;
+    :global(th) { border-bottom: 2px solid #C8122C !important; }
+
+    /* Parent-site nav (Home / Deep-Dive / Methodology / Guardrails) */
+    .parent-nav {
+        display: flex;
+        gap: 22px;
+        padding: 12px 28px;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.88rem;
+    }
+    .parent-nav a {
+        color: #4a3570;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 4px 2px;
+        border-bottom: 2px solid transparent;
+    }
+    .parent-nav a:hover { color: #802cd7; }
+    .parent-nav a.active {
+        color: #802cd7;
+        font-weight: 700;
+        border-bottom-color: #802cd7;
+    }
+
+    /* Chat FAB */
+    .chat-fab {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: #C8122C;
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 18px 12px 14px;
+        cursor: pointer;
+        box-shadow: 0 4px 18px rgba(200,18,44,0.4);
+        transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.88rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+    .chat-fab:hover {
+        background: #a80e24;
+        box-shadow: 0 6px 24px rgba(200,18,44,0.5);
+        transform: translateY(-1px);
+    }
+    .chat-fab:active { transform: translateY(0); }
+
+    /* Chat panel */
+    .chat-panel {
+        position: fixed;
+        bottom: 88px;
+        right: 28px;
+        z-index: 9998;
+        width: 390px;
+        height: 620px;
+        background: #F8F6F2;
+        border-radius: 14px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #E5E7EB;
+        animation: slideUp 0.18s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(12px) scale(0.98); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .chat-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 16px;
+        background: #FFFFFF;
+        border-bottom: 1px solid #E5E7EB;
+        flex-shrink: 0;
+    }
+
+    .chat-panel-title {
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .chat-panel-page {
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 0.7rem;
+        color: #6B7280;
+        text-transform: capitalize;
+        background: #F3F4F6;
+        padding: 2px 8px;
+        border-radius: 10px;
+        border: 1px solid #E5E7EB;
+    }
+
+    .chat-panel iframe {
+        flex: 1;
+        width: 100%;
+        border: none;
+    }
+
+    @media (max-width: 500px) {
+        .chat-panel {
+            bottom: 0;
+            right: 0;
+            width: 100vw;
+            height: 80vh;
+            border-radius: 16px 16px 0 0;
+        }
+        .chat-fab { bottom: 20px; right: 20px; }
     }
 </style>

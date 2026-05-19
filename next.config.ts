@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/deep-dive",
-        destination: "/deep-dive/budget-office/index.html",
+        destination: "/deep-dive/index.html",
       },
       {
         source: "/deep-dive/:path*",

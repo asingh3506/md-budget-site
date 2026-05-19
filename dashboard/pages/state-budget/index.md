@@ -1,12 +1,12 @@
 ---
-title:
-sidebar_position: 3
+title: 
+sidebar_position: 2
 ---
 
 <div style="background: linear-gradient(135deg, #ede5f8 0%, #d4bef0 100%); padding: 28px 36px; border-radius: 12px; border-bottom: 4px solid #802cd7; margin-bottom: 0; display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap;">
     <div>
-        <h1 style="color: #211030; font-size: 1.7rem; font-weight: 700; margin: 0;">💻 Technology View</h1>
-        <p style="color: #6321a5; font-size: 0.95rem; margin: 4px 0 0 0;">IT Spending Analysis · TBM v5.0.1 Classification</p>
+        <h1 style="color: #211030; font-size: 1.7rem; font-weight: 700; margin: 0;">🏛️ Maryland State Budget</h1>
+        <p style="color: #6321a5; font-size: 0.95rem; margin: 4px 0 0 0;">Explore funding across all Maryland agencies</p>
     </div>
     <div style="display:flex; border: 1px solid #c9a8f0; border-radius:6px; width:fit-content; overflow:hidden; background:rgba(255,255,255,0.5);">
         {#each [['latest','Latest Year'],['trend','Trend Over Years']] as [val, label]}
@@ -19,71 +19,38 @@ sidebar_position: 3
 </div>
 
 ```sql g_fy
-select distinct fiscal_year as fy from mbtsa.subprogram_level order by fiscal_year
+select distinct fiscal_year as fy from mbtsa.agency_level order by fiscal_year
 ```
 
 ```sql g_fund
-select distinct fund_type from mbtsa.subprogram_level where fund_type is not null order by fund_type
+select distinct fund_type from mbtsa.agency_level where fund_type is not null order by fund_type
 ```
 
 ```sql g_agency
-select distinct agency_name from mbtsa.subprogram_level where agency_name is not null order by agency_name
+select distinct agency_name from mbtsa.agency_level where agency_name is not null order by agency_name
 ```
 
-<div id="page-filters">
-    <Details title="🔍 Filters" open=false>
-        <Grid cols=3>
-            <Dropdown name=f_fy data={g_fy} value=fy title="Fiscal Year" defaultValue="%">
-                <DropdownOption value="%" valueLabel="All Years"/>
-            </Dropdown>
-            <Dropdown name=f_fund data={g_fund} value=fund_type title="Fund Type" defaultValue="%">
-                <DropdownOption value="%" valueLabel="All Fund Types"/>
-            </Dropdown>
-            <Dropdown name=f_agency data={g_agency} value=agency_name title="Agency" defaultValue="%">
-                <DropdownOption value="%" valueLabel="All Agencies"/>
-            </Dropdown>
-        </Grid>
-    </Details>
-</div>
 
-<FilterSidebar title="⚙ Filters" targetId="page-filters"/>
 
-<div style="display:none;">
-    <Dropdown name=f_view title="View" defaultValue="trend">
-        <DropdownOption value="trend" valueLabel="Trend Over Years"/>
-        <DropdownOption value="latest" valueLabel="Latest Year Snapshot"/>
-    </Dropdown>
-</div>
 
 ```sql filtered
 select
-    cast(t.fiscal_year as int) as fiscal_year,
-    t.agency_code,
-    t.agency_name,
-    t.program_name,
-    t.subprogram_name,
-    t.fund_type,
-    t.it_tower,
-    t.it_sub_tower,
-    t.it_designation,
-    t.total_budget_amount as amount
-from mbtsa.subprogram_level t
-where t.is_it = true
-    and (
-        '${selectedFy}' in ('%', '', 'undefined')
-        or '${selectedFy}' like '(select%'
-        or cast(t.fiscal_year as varchar) = '${selectedFy}'
-    )
-    and (
-        '${selectedFund}' in ('%', '', 'undefined')
-        or '${selectedFund}' like '(select%'
-        or lower(coalesce(t.fund_type, '')) like lower('${selectedFund}')
-    )
-    and (
-        '${selectedAgency}' in ('%', '', 'undefined')
-        or '${selectedAgency}' like '(select%'
-        or lower(coalesce(t.agency_name, '')) like lower('${selectedAgency}')
-    )
+    cast(b.fiscal_year as int) as fiscal_year,
+    b.agency_code,
+    b.agency_name,
+    b.fund_type,
+    b.total_budget_amount as amount
+from mbtsa.agency_level b
+where (
+    '${selectedFund}' in ('%', '', 'undefined')
+    or '${selectedFund}' like '(select%'
+    or lower(coalesce(b.fund_type, '')) like '${selectedFund}'
+)
+and (
+    '${selectedAgency}' in ('%', '', 'undefined')
+    or '${selectedAgency}' like '(select%'
+    or lower(coalesce(b.agency_name, '')) like '${selectedAgency}'
+)
 ```
 
 ```sql yearly_rollup
@@ -121,11 +88,10 @@ select
     b.start_year,
     b.max_year,
     s.chosen_year as display_year,
-    max(case when o.fiscal_year = s.chosen_year then o.total_budget end) as latest_it_spend,
-    max(case when o.fiscal_year = s.chosen_year - 1 then o.total_budget end) as prior_it_spend,
+    max(case when o.fiscal_year = s.chosen_year then o.total_budget end) as latest_budget,
+    max(case when o.fiscal_year = s.chosen_year - 1 then o.total_budget end) as prior_budget,
     s.chosen_year - 1 as prior_year,
-    b.total_budget,
-    max(case when o.year_rank = 2 then o.fiscal_year end) as prior_max_year
+    b.total_budget
 from bounds b
 cross join selected_year s
 left join ordered o on true
@@ -151,32 +117,30 @@ where f.fiscal_year = m.prior_year
 with points as (
     select
         m.*,
-        y_5.total_budget as spend_5y_ago,
-        y_10.total_budget as spend_10y_ago
+        y_5.total_budget as budget_5y_ago,
+        y_10.total_budget as budget_10y_ago
     from ${scope_meta} m
     left join ${yearly_rollup} y_5 on y_5.fiscal_year = m.max_year - 5
     left join ${yearly_rollup} y_10 on y_10.fiscal_year = m.max_year - 10
 )
 select
-    total_budget as total_it_spend,
-    latest_it_spend,
-    latest_it_spend - coalesce(prior_it_spend, 0) as dollar_change,
-    round((latest_it_spend - coalesce(prior_it_spend, 0)) * 100.0 / nullif(prior_it_spend, 0), 1) as yoy_pct,
+    total_budget,
+    latest_budget,
+    latest_budget - coalesce(prior_budget, 0) as dollar_change,
+    round((latest_budget - coalesce(prior_budget, 0)) * 100.0 / nullif(prior_budget, 0), 1) as yoy_pct,
     round(
         case
-            when spend_5y_ago > 0 and latest_it_spend > 0
-                then (power(latest_it_spend / spend_5y_ago, 1.0 / 5.0) - 1.0) * 100.0
+            when budget_5y_ago > 0 and latest_budget > 0
+                then (power(latest_budget / budget_5y_ago, 1.0 / 5.0) - 1.0) * 100.0
             else null
-        end,
-        1
+        end, 1
     ) as cagr_5y_pct,
     round(
         case
-            when spend_10y_ago > 0 and latest_it_spend > 0
-                then (power(latest_it_spend / spend_10y_ago, 1.0 / 10.0) - 1.0) * 100.0
+            when budget_10y_ago > 0 and latest_budget > 0
+                then (power(latest_budget / budget_10y_ago, 1.0 / 10.0) - 1.0) * 100.0
             else null
-        end,
-        1
+        end, 1
     ) as cagr_10y_pct,
     coalesce(cast(display_year as varchar), 'N/A') as max_year_label
 from points
@@ -208,8 +172,10 @@ with base as (
     select
         fiscal_year,
         total_budget,
-        first_value(total_budget) over (order by fiscal_year) as base_spend,
-        last_value(total_budget) over (order by fiscal_year rows between unbounded preceding and unbounded following) as final_spend,
+        first_value(total_budget) over (order by fiscal_year) as base_budget,
+        first_value(fiscal_year) over (order by fiscal_year) as base_year,
+        last_value(fiscal_year) over (order by fiscal_year rows between unbounded preceding and unbounded following) as max_year,
+        last_value(total_budget) over (order by fiscal_year rows between unbounded preceding and unbounded following) as final_budget,
         row_number() over (order by fiscal_year) - 1 as yr_idx,
         count(*) over () - 1 as total_years
     from ${yearly_rollup}
@@ -218,13 +184,15 @@ cagr_calc as (
     select
         fiscal_year,
         total_budget,
-        base_spend,
-        final_spend,
+        base_budget,
+        base_year,
+        max_year,
+        final_budget,
         yr_idx,
         total_years,
         round(
-            case when total_years > 0 and base_spend > 0 and final_spend > 0
-                then (power(final_spend / base_spend, 1.0 / total_years) - 1.0) * 100.0
+            case when total_years > 0 and base_budget > 0 and final_budget > 0
+                then (power(final_budget / base_budget, 1.0 / total_years) - 1.0) * 100.0
                 else null
             end, 2
         ) as cagr_pct
@@ -233,10 +201,10 @@ cagr_calc as (
 select
     fiscal_year,
     total_budget,
-    round(base_spend * power(1.0 + cagr_pct / 100.0, yr_idx), 2) as cagr_trend,
+    round(base_budget * power(1.0 + cagr_pct / 100.0, yr_idx), 2) as cagr_trend,
     -- CPI-based inflation multipliers anchored to first year in data
     -- Using US CPI annual averages; first year in data = multiplier 1.000
-    round(base_spend * case fiscal_year
+    round(base_budget * case fiscal_year
         when 2017 then 1.000
         when 2018 then 1.021
         when 2019 then 1.041
@@ -255,200 +223,158 @@ from cagr_calc
 order by fiscal_year
 ```
 
-```sql snapshot_towers
+```sql snapshot_agencies
 select
-    it_tower,
+    agency_name,
     sum(amount) as spend,
     round(sum(amount) * 100.0 / nullif(sum(sum(amount)) over (), 0), 1) as pct_of_total,
     sum(sum(amount)) over (order by sum(amount) desc rows between unbounded preceding and current row) as cumulative,
     sum(sum(amount)) over () as grand_total
 from ${filtered_latest}
-where it_tower is not null
-group by it_tower
-order by spend desc
-```
-
-```sql snapshot_subprograms
-select
-    subprogram_name,
-    sum(amount) as spend,
-    round(sum(amount) * 100.0 / nullif(sum(sum(amount)) over (), 0), 1) as pct_of_total,
-    sum(sum(amount)) over (order by sum(amount) desc rows between unbounded preceding and current row) as cumulative,
-    sum(sum(amount)) over () as grand_total
-from ${filtered_latest}
-where subprogram_name is not null
-group by subprogram_name
+where agency_name is not null
+group by agency_name
 order by spend desc
 limit 10
 ```
 
-```sql tower_snapshot
-with latest as (
-    select it_tower, sum(amount) as latest_spend
-    from ${filtered_latest}
-    where it_tower is not null and trim(it_tower) <> ''
-    group by it_tower
-),
-prior as (
-    select it_tower, sum(amount) as prior_spend
-    from ${filtered_prior}
-    where it_tower is not null and trim(it_tower) <> ''
-    group by it_tower
-),
-hist_5y as (
-    select f.it_tower, sum(f.amount) as spend_5y_ago
-    from ${filtered} f cross join ${scope_meta} m
-    where f.it_tower is not null and trim(f.it_tower) <> ''
-        and f.fiscal_year = m.max_year - 5
-    group by f.it_tower
-),
-hist_10y as (
-    select f.it_tower, sum(f.amount) as spend_10y_ago
-    from ${filtered} f cross join ${scope_meta} m
-    where f.it_tower is not null and trim(f.it_tower) <> ''
-        and f.fiscal_year = m.max_year - 10
-    group by f.it_tower
-)
-select
-    l.it_tower,
-    l.latest_spend,
-    coalesce(p.prior_spend, 0) as prior_spend,
-    l.latest_spend - coalesce(p.prior_spend, 0) as dollar_change,
-    round((l.latest_spend - coalesce(p.prior_spend, 0)) * 100.0 / nullif(p.prior_spend, 0), 1) as yoy_change_pct,
-    round(case when h5.spend_5y_ago > 0 and l.latest_spend > 0
-        then (power(l.latest_spend / h5.spend_5y_ago, 1.0/5.0) - 1.0) * 100.0
-        else null end, 1) as cagr_5y_pct,
-    round(case when h10.spend_10y_ago > 0 and l.latest_spend > 0
-        then (power(l.latest_spend / h10.spend_10y_ago, 1.0/10.0) - 1.0) * 100.0
-        else null end, 1) as cagr_10y_pct,
-    round(l.latest_spend * 100.0 / nullif(m.latest_it_spend, 0), 1) as latest_year_pct
-from latest l
-left join prior p using (it_tower)
-left join hist_5y h5 using (it_tower)
-left join hist_10y h10 using (it_tower)
-cross join ${scope_meta} m
-order by l.latest_spend desc
+```sql fund_rules
+select *
+from (
+    values
+        ('federal funds', 1, '#C8122C', false),
+        ('general funds', 2, '#FFC838', false),
+        ('special funds', 3, '#2EAD6B', false),
+        ('american rescue plan act%', 4, '#9B1C31', true),
+        ('coronavirus aid, relief, and economic security act%', 5, '#B08A00', true),
+        ('coronavirus response and relief sup act%', 6, '#6A1B2A', true),
+        ('federal funds (covid)%', 7, '#1ABC9C', true),
+        ('unrestricted', 8, '#F08C46', false),
+        ('current%unrest%fund%', 8, '#F08C46', true),
+        ('restricted', 9, '#5B8FF9', false),
+        ('current%rest%fund%', 9, '#5B8FF9', true)
+) as rules(pattern, fund_rank, fund_color, is_like)
 ```
 
+```sql fund_profile
+with distinct_funds as (
+    select distinct fund_type from ${filtered} where fund_type is not null
+),
+matches as (
+    select
+        d.fund_type,
+        r.fund_rank,
+        r.fund_color,
+        row_number() over (partition by d.fund_type order by r.fund_rank) as rank_order
+    from distinct_funds d
+    join ${fund_rules} r
+        on (
+            (r.is_like and lower(d.fund_type) like r.pattern)
+            or (not r.is_like and lower(d.fund_type) = r.pattern)
+        )
+)
+select
+    d.fund_type,
+    coalesce(m.fund_rank, 99) as fund_rank,
+    coalesce(m.fund_color, '#4C4743') as fund_color
+from distinct_funds d
+left join matches m on m.fund_type = d.fund_type and m.rank_order = 1
+```
+
+```sql fund_snapshot
+with latest as (
+    select fund_type, sum(amount) as latest_budget
+    from ${filtered_latest}
+    where fund_type is not null and trim(fund_type) <> ''
+    group by fund_type
+),
+prior as (
+    select fund_type, sum(amount) as prior_budget
+    from ${filtered_prior}
+    where fund_type is not null and trim(fund_type) <> ''
+    group by fund_type
+),
+hist_5y as (
+    select f.fund_type, sum(f.amount) as budget_5y_ago
+    from ${filtered} f cross join ${scope_meta} m
+    where f.fund_type is not null and trim(f.fund_type) <> ''
+        and f.fiscal_year = m.max_year - 5
+    group by f.fund_type
+),
+hist_10y as (
+    select f.fund_type, sum(f.amount) as budget_10y_ago
+    from ${filtered} f cross join ${scope_meta} m
+    where f.fund_type is not null and trim(f.fund_type) <> ''
+        and f.fiscal_year = m.max_year - 10
+    group by f.fund_type
+)
+select
+    l.fund_type,
+    l.latest_budget,
+    coalesce(p.prior_budget, 0) as prior_budget,
+    l.latest_budget - coalesce(p.prior_budget, 0) as dollar_change,
+    round((l.latest_budget - coalesce(p.prior_budget, 0)) * 100.0 / nullif(p.prior_budget, 0), 1) as yoy_change_pct,
+    round(case when h5.budget_5y_ago > 0 and l.latest_budget > 0
+        then (power(l.latest_budget / h5.budget_5y_ago, 1.0/5.0) - 1.0) * 100.0
+        else null end, 1) as cagr_5y_pct,
+    round(case when h10.budget_10y_ago > 0 and l.latest_budget > 0
+        then (power(l.latest_budget / h10.budget_10y_ago, 1.0/10.0) - 1.0) * 100.0
+        else null end, 1) as cagr_10y_pct,
+    round(l.latest_budget * 100.0 / nullif(m.latest_budget, 0), 1) as latest_year_pct,
+    coalesce(fp.fund_color, '#4C4743') as fund_color
+from latest l
+left join prior p using (fund_type)
+left join hist_5y h5 using (fund_type)
+left join hist_10y h10 using (fund_type)
+cross join ${scope_meta} m
+left join ${fund_profile} fp on fp.fund_type = l.fund_type
+order by l.latest_budget desc
+```
 
 ```sql agency_movers
 with latest as (
-    select agency_name, sum(amount) as latest_spend
+    select agency_name, sum(amount) as latest_budget
     from ${filtered_latest}
     where agency_name is not null and trim(agency_name) <> ''
     group by agency_name
 ),
 prior as (
-    select agency_name, sum(amount) as prior_spend
+    select agency_name, sum(amount) as prior_budget
     from ${filtered_prior}
     where agency_name is not null and trim(agency_name) <> ''
     group by agency_name
 )
 select
     l.agency_name,
-    l.latest_spend,
-    coalesce(p.prior_spend, 0) as prior_spend,
-    l.latest_spend - coalesce(p.prior_spend, 0) as dollar_change,
-    round((l.latest_spend - coalesce(p.prior_spend, 0)) * 100.0 / nullif(p.prior_spend, 0), 1) as pct_change
+    l.latest_budget,
+    coalesce(p.prior_budget, 0) as prior_budget,
+    l.latest_budget - coalesce(p.prior_budget, 0) as dollar_change,
+    round((l.latest_budget - coalesce(p.prior_budget, 0)) * 100.0 / nullif(p.prior_budget, 0), 1) as pct_change
 from latest l
 left join prior p using (agency_name)
-order by abs(l.latest_spend - coalesce(p.prior_spend, 0)) desc
+order by abs(l.latest_budget - coalesce(p.prior_budget, 0)) desc
 limit 20
 ```
 
-```sql agency_latest
-with latest as (
-    select agency_name, sum(amount) as latest_spend
-    from ${filtered_latest}
-    where agency_name is not null and trim(agency_name) <> ''
-    group by agency_name
-),
-prior as (
-    select agency_name, sum(amount) as prior_spend
-    from ${filtered_prior}
-    where agency_name is not null and trim(agency_name) <> ''
-    group by agency_name
-),
-hist_5y as (
-    select f.agency_name, sum(f.amount) as spend_5y_ago
-    from ${filtered} f cross join ${scope_meta} m
-    where f.agency_name is not null and trim(f.agency_name) <> ''
-        and f.fiscal_year = m.max_year - 5
-    group by f.agency_name
-),
-hist_10y as (
-    select f.agency_name, sum(f.amount) as spend_10y_ago
-    from ${filtered} f cross join ${scope_meta} m
-    where f.agency_name is not null and trim(f.agency_name) <> ''
-        and f.fiscal_year = m.max_year - 10
-    group by f.agency_name
-)
+```sql fund_trend
 select
-    l.agency_name,
-    '/technology/agency-breakdown/' || replace(l.agency_name, ' ', '%20') as agency_link,
-    l.latest_spend,
-    l.latest_spend - coalesce(p.prior_spend, 0) as dollar_change,
-    round((l.latest_spend - coalesce(p.prior_spend, 0)) * 100.0 / nullif(p.prior_spend, 0), 1) as yoy_change_pct,
-    round(
-        case when h5.spend_5y_ago > 0 and l.latest_spend > 0
-            then (power(l.latest_spend / h5.spend_5y_ago, 1.0/5.0) - 1.0) * 100.0
-            else null end, 1
-    ) as cagr_5y_pct,
-    round(
-        case when h10.spend_10y_ago > 0 and l.latest_spend > 0
-            then (power(l.latest_spend / h10.spend_10y_ago, 1.0/10.0) - 1.0) * 100.0
-            else null end, 1
-    ) as cagr_10y_pct,
-    round(l.latest_spend * 100.0 / nullif(m.latest_it_spend, 0), 1) as latest_year_pct
-from latest l
-left join prior p using (agency_name)
-left join hist_5y h5 using (agency_name)
-left join hist_10y h10 using (agency_name)
-cross join ${scope_meta} m
-order by l.latest_spend desc
-```
-
-```sql top_towers_trend
-select
-    it_tower,
-    sum(amount) as total_it_spend
-from ${filtered}
-where it_tower is not null
-group by it_tower
-order by total_it_spend desc
-limit 10
-```
-
-```sql tower_trend
-with tower_spend as (
-    select
-        f.fiscal_year,
-        f.it_tower,
-        sum(f.amount) as spend
-    from ${filtered} f
-    where f.it_tower in (select it_tower from ${top_towers_trend})
-    group by f.fiscal_year, f.it_tower
-),
-yearly_totals as (
-    select fiscal_year, total_budget as total_it_spend
-    from ${yearly_rollup}
-)
-select
-    t.fiscal_year,
-    t.it_tower,
-    t.spend,
-    t.spend / nullif(y.total_it_spend, 0) as pct_of_total
-from tower_spend t
-left join yearly_totals y on y.fiscal_year = t.fiscal_year
-order by t.fiscal_year
+    f.fiscal_year,
+    f.fund_type,
+    sum(f.amount) as spend,
+    coalesce(fp.fund_rank, 99) as fund_rank,
+    coalesce(fp.fund_color, '#4C4743') as fund_color
+from ${filtered} f
+left join ${fund_profile} fp on fp.fund_type = f.fund_type
+where f.fund_type is not null
+group by f.fiscal_year, f.fund_type, fp.fund_rank, fp.fund_color
+order by f.fiscal_year, fund_rank
 ```
 
 ```sql top_agencies_trend
-select agency_name, sum(amount) as total_it_spend
+select agency_name, sum(amount) as total_budget
 from ${filtered}
 where agency_name is not null
 group by agency_name
-order by total_it_spend desc
+order by total_budget desc
 limit 10
 ```
 
@@ -473,6 +399,58 @@ from ${filtered}
 where agency_name is not null
 group by agency_name, fiscal_year
 order by agency_name, fiscal_year
+```
+
+```sql agency_latest
+with latest as (
+    select agency_name, sum(amount) as latest_budget
+    from ${filtered_latest}
+    where agency_name is not null and trim(agency_name) <> ''
+    group by agency_name
+),
+prior as (
+    select agency_name, sum(amount) as prior_budget
+    from ${filtered_prior}
+    where agency_name is not null and trim(agency_name) <> ''
+    group by agency_name
+),
+hist_5y as (
+    select f.agency_name, sum(f.amount) as budget_5y_ago
+    from ${filtered} f cross join ${scope_meta} m
+    where f.agency_name is not null and trim(f.agency_name) <> ''
+        and f.fiscal_year = m.max_year - 5
+    group by f.agency_name
+),
+hist_10y as (
+    select f.agency_name, sum(f.amount) as budget_10y_ago
+    from ${filtered} f cross join ${scope_meta} m
+    where f.agency_name is not null and trim(f.agency_name) <> ''
+        and f.fiscal_year = m.max_year - 10
+    group by f.agency_name
+)
+select
+    l.agency_name,
+    '/state-budget/agency-breakdown/' || replace(l.agency_name, ' ', '%20') as agency_link,
+    l.latest_budget,
+    l.latest_budget - coalesce(p.prior_budget, 0) as dollar_change,
+    round((l.latest_budget - coalesce(p.prior_budget, 0)) * 100.0 / nullif(p.prior_budget, 0), 1) as yoy_change_pct,
+    round(
+        case when h5.budget_5y_ago > 0 and l.latest_budget > 0
+            then (power(l.latest_budget / h5.budget_5y_ago, 1.0/5.0) - 1.0) * 100.0
+            else null end, 1
+    ) as cagr_5y_pct,
+    round(
+        case when h10.budget_10y_ago > 0 and l.latest_budget > 0
+            then (power(l.latest_budget / h10.budget_10y_ago, 1.0/10.0) - 1.0) * 100.0
+            else null end, 1
+    ) as cagr_10y_pct,
+    round(l.latest_budget * 100.0 / nullif(m.latest_budget, 0), 1) as latest_year_pct
+from latest l
+left join prior p using (agency_name)
+left join hist_5y h5 using (agency_name)
+left join hist_10y h10 using (agency_name)
+cross join ${scope_meta} m
+order by l.latest_budget desc
 ```
 
 <script>
@@ -574,40 +552,73 @@ order by agency_name, fiscal_year
     let localView = 'trend';
     let pivotYearView = '3y';
     let searchTerm = '';
-    let selectedTower = null;
+    let selectedFundSeries = null;
     let selectedAgencyLine = null;
 
     $: selectedFy = selectedValue($inputStore?.f_fy, false);
     $: selectedFund = selectedValue($inputStore?.f_fund);
     $: selectedAgency = selectedValue($inputStore?.f_agency);
-    $: viewMode = localView;
-    $: trendResults = calculateTrendResults(yearly, 'total_budget');
-    $: cagrPct = fiscal_overview_cagr?.[0]?.cagr_pct != null ? Number(fiscal_overview_cagr[0].cagr_pct).toFixed(1) : null;
 
-    $: towerTrendYears = [...new Set(tower_trend.map((d) => String(d.fiscal_year)))].sort((a, b) => Number(a) - Number(b));
-    $: highlightedTowerNames = (top_towers_trend ?? []).slice(0, 3).map((t) => t.it_tower);
-
-    $: agencyLineTrendYears = [...new Set((agency_trend_lines ?? []).map(d => String(d.fiscal_year)))].sort((a, b) => Number(a) - Number(b));
-    $: highlightedAgencyNames = (top_agencies_trend ?? []).slice(0, 3).map(a => a.agency_name);
 
     $: agencyTableColumns = [
         { id: 'agency_name', title: 'Agency', align: 'left' },
-        { id: 'latest_spend', title: `Latest Year (${overview?.[0]?.max_year_label ?? 'N/A'})`, fmt: 'money', sortable: true },
-        { id: 'latest_year_pct', title: '% of IT Total', fmt: 'pct', sortable: true },
+        { id: 'latest_budget', title: `Latest Year (${overview?.[0]?.max_year_label ?? 'N/A'})`, fmt: 'money', sortable: true },
+        { id: 'latest_year_pct', title: '% of Total', fmt: 'pct', sortable: true },
         { id: 'dollar_change', title: 'YoY Change ($)', fmt: 'money', conditional: true, sortable: true },
         { id: 'yoy_change_pct', title: 'YoY Change (%)', fmt: 'pct', conditional: true, sortable: true },
+
     ];
 
-    $: towerTableColumns = [
-        { id: 'it_tower', title: 'IT Tower', align: 'left' },
-        { id: 'latest_spend', title: `Latest Year (${overview?.[0]?.max_year_label ?? 'N/A'})`, fmt: 'money', sortable: true },
-        { id: 'latest_year_pct', title: '% of IT Total', fmt: 'pct', sortable: true },
+    $: fundTableColumns = [
+        { id: 'fund_type', title: 'Fund Type', align: 'left' },
+        { id: 'latest_budget', title: `Latest Year (${overview?.[0]?.max_year_label ?? 'N/A'})`, fmt: 'money', sortable: true },
+        { id: 'latest_year_pct', title: '% of Total', fmt: 'pct', sortable: true },
         { id: 'dollar_change', title: 'YoY Change ($)', fmt: 'money', conditional: true, sortable: true },
-        { id: 'yoy_change_pct', title: 'YoY Change (%)', fmt: 'pct', conditional: true, sortable: true },
+        { id: 'yoy_change_pct', title: 'YoY Change (%)', fmt: 'pct', conditional: true, sortable: true }
     ];
 
+    const toggleAgencyLine = (name) => {
+        selectedAgencyLine = selectedAgencyLine === name ? null : name;
+    };
+
+    const toggleFundSeries = (name) => {
+        selectedFundSeries = selectedFundSeries === name ? null : name;
+    };
+
+    const fundTypeDescriptions = {
+        'Federal Funds': 'Federal aid and grant funding used to support state programs.',
+        'General Funds': 'State general revenue used for core operations and services.',
+        'Special Funds': 'Dedicated or restricted funds assigned to specific purposes.',
+        'American Rescue Plan Act of 21': 'Federal recovery funding from the American Rescue Plan Act.',
+        'Coronavirus Aid, Relief, and Economic Security Act': 'Federal emergency relief funding from the CARES Act.',
+        'Coronavirus Response and Relief Sup Act': 'Federal pandemic response funding from the CRRSA Act.',
+        'Federal Funds (COVID)': 'Federal COVID-era relief and recovery funding.',
+        'Current Unrestricted Funds': 'Current-year unrestricted dollars available for use.',
+        'Current Restricted Funds': 'Current-year restricted dollars tied to specific requirements.',
+        'Federal Funds (ARRA)': 'Federal stimulus funding from the American Recovery and Reinvestment Act.'
+    };
+
+    $: selectedFy = selectedValue($inputStore?.f_fy);
+    $: selectedFund = selectedValue($inputStore?.f_fund);
+    $: selectedAgency = selectedValue($inputStore?.f_agency);
+    $: viewMode = localView;
+    $: trendResults = calculateTrendResults(yearly, 'total_budget');
+    $: cagrPct = fiscal_overview_cagr?.[0]?.cagr_pct != null ? Number(fiscal_overview_cagr[0].cagr_pct).toFixed(1) : null;
+    $: fundTrendYears = [...new Set(fund_trend.map(d => String(d.fiscal_year)))].sort((a, b) => Number(a) - Number(b));
+    $: fundSeriesTotals = fund_trend.reduce((acc, row) => {
+        const key = row.fund_type ?? 'Unknown';
+        acc[key] = (acc[key] || 0) + (Number(row.spend) || 0);
+        return acc;
+    }, {});
+    $: fundSeriesNames = [...new Set(fund_trend.map(d => d.fund_type))].sort((a, b) => {
+        const totalDiff = (fundSeriesTotals[b] || 0) - (fundSeriesTotals[a] || 0);
+        if (Math.abs(totalDiff) > 0.000001) return totalDiff;
+        return String(a).localeCompare(String(b));
+    });
+    $: agencyLineTrendYears = [...new Set((agency_trend_lines ?? []).map(d => String(d.fiscal_year)))].sort((a, b) => Number(a) - Number(b));
+    $: highlightedAgencyNames = (top_agencies_trend ?? []).slice(0, 3).map(a => a.agency_name);
     $: pivotYears = [...new Set((agency_drill ?? []).map(d => d.fiscal_year))].sort((a, b) => a - b);
-    $: tower_agency_pivot = Object.values(
+    $: agency_pivot = Object.values(
         (agency_drill ?? []).reduce(function(acc, row) {
             const key = row.agency_name;
             if (!acc[key]) acc[key] = { agency_name: row.agency_name };
@@ -621,40 +632,60 @@ order by agency_name, fiscal_year
         return pivotYears;
     })();
     $: filteredPivot = searchTerm
-        ? tower_agency_pivot.filter(function(r) {
+        ? agency_pivot.filter(function(r) {
             return r.agency_name.toLowerCase().includes(searchTerm.toLowerCase());
         })
-        : tower_agency_pivot;
+        : agency_pivot;
     $: sortedPivot = pivotViewYears.length > 0
         ? filteredPivot.slice().sort(function(a, b) {
             const lastYr = 'FY' + pivotViewYears[pivotViewYears.length - 1];
             return (b[lastYr] || 0) - (a[lastYr] || 0);
         }).map(function(r) {
             return Object.assign({}, r, {
-                agency_link: '/technology/agency-breakdown/' + encodeURIComponent(r.agency_name)
+                agency_link: '/state-budget/agency-breakdown/' + encodeURIComponent(r.agency_name)
             });
         })
         : filteredPivot.map(function(r) {
             return Object.assign({}, r, {
-                agency_link: '/technology/agency-breakdown/' + encodeURIComponent(r.agency_name)
+                agency_link: '/state-budget/agency-breakdown/' + encodeURIComponent(r.agency_name)
             });
         });
-
-    const toggleTower = (name) => {
-        selectedTower = selectedTower === name ? null : name;
-    };
-
-    const toggleAgencyLine = (name) => {
-        selectedAgencyLine = selectedAgencyLine === name ? null : name;
-    };
 </script>
+
+<FilterSidebar title="⚙ Filters"/>
+
+
+<div id="page-filters">
+    <Details title="🔍 Filters" open=false>
+        <Grid cols=3>
+            <Dropdown name=f_fy data={g_fy} value=fy title="Fiscal Year" defaultValue="%">
+                <DropdownOption value="%" valueLabel="All Years"/>
+            </Dropdown>
+            <Dropdown name=f_fund data={g_fund} value=fund_type title="Fund Type" defaultValue="%">
+                <DropdownOption value="%" valueLabel="All Fund Types"/>
+            </Dropdown>
+            <Dropdown name=f_agency data={g_agency} value=agency_name title="Agency" defaultValue="%">
+                <DropdownOption value="%" valueLabel="All Agencies"/>
+            </Dropdown>
+        </Grid>
+    </Details>
+</div>
+
+
+
+<div style="display:none;">
+    <Dropdown name=f_view title="View" defaultValue="trend">
+        <DropdownOption value="trend" valueLabel="Trend Over Years"/>
+        <DropdownOption value="latest" valueLabel="Latest Year Snapshot"/>
+    </Dropdown>
+</div>
 
 {#if viewMode == 'latest'}
 
 <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin:16px 0;">
     <div style="background:var(--nxt-surface); border:1px solid var(--nxt-border); border-left:4px solid #C8122C; border-radius:8px; padding:16px 28px; min-width:200px; text-align:center;">
         <div style="font-size:11px; font-weight:500; color:#6B7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">Latest Year ({overview?.[0]?.max_year_label ?? 'N/A'})</div>
-        <div style="font-size:1.8rem; font-weight:700; color:#231F20;">{(() => { const n = Number(overview?.[0]?.latest_it_spend)||0; const abs=Math.abs(n); if(abs>=1e9) return '$'+(abs/1e9).toFixed(2)+'B'; if(abs>=1e6) return '$'+(abs/1e6).toFixed(1)+'M'; return '$'+Math.round(abs).toLocaleString(); })()}</div>
+        <div style="font-size:1.8rem; font-weight:700; color:#231F20;">{(() => { const n = Number(overview?.[0]?.latest_budget)||0; const abs=Math.abs(n); if(abs>=1e9) return '$'+(abs/1e9).toFixed(2)+'B'; if(abs>=1e6) return '$'+(abs/1e6).toFixed(1)+'M'; return '$'+Math.round(abs).toLocaleString(); })()}</div>
     </div>
     <div style={'background:var(--nxt-surface); border:1px solid var(--nxt-border); border-left:4px solid ' + ((overview?.[0]?.yoy_pct ?? 0) >= 0 ? '#2EAD6B' : '#C8122C') + '; border-radius:8px; padding:16px 28px; min-width:200px; text-align:center;'}>
         <div style="font-size:11px; font-weight:500; color:#6B7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">YoY Change</div>
@@ -668,78 +699,67 @@ order by agency_name, fiscal_year
 </div>
 
 ---
+## Top 10 agencies by budget — Latest Year
 
-## Top IT Towers by Spend — Latest Year
-
-{#if snapshot_towers?.length > 0}
-    <ParetoInsight data={snapshot_towers} entityLabel="IT towers"/>
+{#if snapshot_agencies?.length > 0}
+    <ParetoInsight data={snapshot_agencies} entityLabel="agencies"/>
     <ParetoBarChart
-        data={snapshot_towers}
+        data={snapshot_agencies}
         title=""
         barField="spend"
-        labelField="it_tower"
+        labelField="agency_name"
         pctField="pct_of_total"
         cumulativeField="cumulative"
         totalField="grand_total"
         height="420px"
     />
 {:else}
-    <Alert status=warning>No IT tower spend data available for this filter selection.</Alert>
+    <Alert status=warning>No agency snapshot data available for this filter selection.</Alert>
 {/if}
 
 ---
 
-## Top IT Programs by Spend — Latest Year
+## Fund type share — Latest Year
 
-{#if snapshot_subprograms?.length > 0}
-    <ParetoInsight data={snapshot_subprograms} entityLabel="IT programs"/>
-    <ParetoBarChart
-        data={snapshot_subprograms}
+{#if fund_snapshot?.length > 0}
+    <DonutFundSnapshot
+        data={fund_snapshot}
+        fund_profile={fund_profile}
         title=""
-        barField="spend"
-        labelField="subprogram_name"
-        pctField="pct_of_total"
-        cumulativeField="cumulative"
-        totalField="grand_total"
         height="420px"
+        nameField="fund_type"
+        valueField="latest_budget"
+        pctField="latest_year_pct"
     />
-{:else}
-    <Alert status=warning>No IT program spend data available for this filter selection.</Alert>
-{/if}
-
----
-
-## IT Tower Breakdown — Latest Year
-
-{#if tower_snapshot?.length > 0}
     <ConditionalTable
-        data={tower_snapshot}
-        columns={towerTableColumns}
+        data={fund_snapshot}
+        columns={fundTableColumns}
         search={true}
-        defaultSort="latest_spend"
+        defaultSort="latest_budget"
         defaultDir={-1}
     />
 {:else}
-    <Alert status=warning>No IT tower breakdown data available for this filter selection.</Alert>
+    <Alert status=warning>No fund type data available for this filter selection.</Alert>
 {/if}
 
 ---
 
-## IT Spend Changes — Year over Year
+## Budget Changes — Year over Year
 
-<Alert status=info>Agencies sorted by absolute dollar change in IT spend from prior year.</Alert>
+<Alert status=info>Agencies sorted by absolute dollar change from prior year.</Alert>
 
 <BudgetChangesChart
     data={agency_movers}
     labelField="agency_name"
-    title="Biggest IT spend changes vs prior year"
+    title="Biggest budget changes vs prior year"
     height="520px"
     limit={10}
 />
 
 ---
 
-## Agency IT Spend Drill-Down — Click a row to open the Agency page
+## Agency Drill-Down Table 
+#### Click a row to open the Agency page
 
 {#if agency_latest?.length > 0}
     <ConditionalTable
@@ -747,11 +767,11 @@ order by agency_name, fiscal_year
         columns={agencyTableColumns}
         linkField="agency_link"
         search={true}
-        defaultSort="latest_spend"
+        defaultSort="latest_budget"
         defaultDir={-1}
     />
 {:else}
-    <Alert status=warning>No agency IT spend data available for this filter selection.</Alert>
+    <Alert status=warning>No agency data available for this filter selection.</Alert>
 {/if}
 
 {/if}
@@ -763,128 +783,29 @@ order by agency_name, fiscal_year
 ## Fiscal Overview
 
 <TrendOverview
-    yearly={yearly}
+    {yearly}
     yoyDetail={yoy_detail}
     fiscalOverviewCagr={fiscal_overview_cagr}
     {cagrPct}
     {chartHeight}
 />
-
 ---
 
-## IT Tower Composition Over Time
+## Fund Composition Over Time
 
-{#if tower_trend?.length > 0}
-    <div style="display:flex; flex-wrap:wrap; gap:8px; margin: 8px 0 14px 0;">
-        {#each top_towers_trend as t}
-            <button
-                on:click={() => toggleTower(t.it_tower)}
-                style={`border-radius:14px; padding:6px 10px; font-size:0.9rem; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border: ${selectedTower === t.it_tower ? '2px solid #C8122C' : '1px solid var(--nxt-border)'}; background: ${selectedTower === t.it_tower ? 'linear-gradient(90deg,#FFF7F7,#FFECEC)' : 'var(--nxt-surface)'}; box-shadow: ${selectedTower === t.it_tower ? '0 4px 10px rgba(200,20,44,0.08)' : 'none'}`}
-                aria-pressed={selectedTower === t.it_tower}
-            >
-                <span style={`width:10px; height:10px; border-radius:50%; background: ${t.it_tower === highlightedTowerNames[0] ? '#C8122C' : t.it_tower === highlightedTowerNames[1] ? '#FFC838' : t.it_tower === highlightedTowerNames[2] ? '#231F20' : '#C9CED6'}; display:inline-block;`}></span>
-                <span style={`color:${selectedTower === t.it_tower ? '#C8122C' : '#231F20'}; font-weight:${selectedTower === t.it_tower ? 700 : 500}`}>{t.it_tower}</span>
-            </button>
-        {/each}
-    </div>
-    <ECharts
-        height="480px"
-        config={{
-            tooltip: {
-                trigger: 'item',
-                formatter: function(param) {
-                    if (!param) return '';
-                    const hoveredTower = param.seriesName;
-                    const rows = towerTrendYears.slice()
-                        .sort(function(a, b) { return Number(b) - Number(a); })
-                        .map(function(year) {
-                            const point = tower_trend.find(function(d) {
-                                return String(d.fiscal_year) === year && d.it_tower === hoveredTower;
-                            });
-                            const v = point ? point.spend : 0;
-                            const pct = point ? (point.pct_of_total * 100).toFixed(1) : '0.0';
-                            return year + ': ' + usdCompact(v) + ' (' + pct + '%)';
-                        });
-                    return '<b>' + hoveredTower + '</b><br/>' + rows.join('<br/>');
-                }
-            },
-            grid: { left: 56, right: 24, top: 20, bottom: 40 },
-            xAxis: { type: 'category', data: towerTrendYears },
-            yAxis: {
-                type: 'value',
-                axisLabel: {
-                    formatter: (v) => {
-                        const n = Number(v) || 0;
-                        return Math.abs(n) >= 1e9 ? `$${(n / 1e9).toFixed(0)}B` : `$${(n / 1e6).toFixed(0)}M`;
-                    }
-                },
-                splitLine: { lineStyle: { color: '#D9DDE3' } }
-            },
-            series: top_towers_trend.map((tower) => {
-                const towerName = tower.it_tower;
-                const isHighlighted = highlightedTowerNames.includes(towerName);
-                const hasTowerSelection = Boolean(selectedTower);
-                const isSelectedTower = selectedTower === towerName;
-                const isSelected = !hasTowerSelection || isSelectedTower;
-                const baseColor = isHighlighted
-                    ? (towerName === highlightedTowerNames[0] ? '#C8122C'
-                        : towerName === highlightedTowerNames[1] ? '#FFC838'
-                        : '#231F20')
-                    : '#C9CED6';
-                return {
-                    name: towerName,
-                    type: 'line',
-                    smooth: false,
-                    symbol: 'circle',
-                    symbolSize: hasTowerSelection ? (isSelectedTower ? (isHighlighted ? 12 : 11) : 4) : (isHighlighted ? 7 : 6),
-                    showSymbol: true,
-                    lineStyle: {
-                        color: baseColor,
-                        width: hasTowerSelection ? (isSelectedTower ? (isHighlighted ? 6 : 5) : 1) : (isHighlighted ? 3 : 2),
-                        opacity: isSelected ? 1 : 0.06
-                    },
-                    itemStyle: { color: baseColor, opacity: isSelected ? 1 : 0.06 },
-                    label: {
-                        show: isHighlighted,
-                        position: 'top',
-                        offset: [0, -10],
-                        backgroundColor: 'rgba(255, 255, 255, 0.92)',
-                        padding: [2, 5],
-                        borderRadius: 3,
-                        lineHeight: 14,
-                        color: baseColor,
-                        fontWeight: isHighlighted ? 700 : 500,
-                        formatter: (params) => {
-                            const middleIndex = Math.floor(towerTrendYears.length / 2);
-                            return params.dataIndex === middleIndex ? towerName : '';
-                        }
-                    },
-                    emphasis: {
-                        focus: 'series',
-                        scale: true,
-                        lineStyle: { color: isHighlighted ? baseColor : '#3B7DD8', width: 4, opacity: 1 },
-                        itemStyle: { color: isHighlighted ? baseColor : '#3B7DD8', opacity: 1 },
-                        label: { show: false }
-                    },
-                    blur: {
-                        lineStyle: { opacity: 0.06 },
-                        itemStyle: { opacity: 0.06 }
-                    },
-                    data: towerTrendYears.map((y) => {
-                        const point = tower_trend.find((d) => String(d.fiscal_year) === y && d.it_tower === towerName);
-                        return { value: point?.spend ?? 0, pct: point?.pct_of_total ?? 0 };
-                    })
-                };
-            })
-        }}
+{#if fund_trend?.length > 0}
+    <FundCompositionTrend
+        fundTrend={fund_trend}
+        {fundTrendYears}
+        {fundSeriesNames}
+        {fundSeriesTotals}
     />
 {:else}
-    <Alert status=warning>No IT tower trend data available for this filter selection.</Alert>
+    <Alert status=warning>No fund trend data available for this filter selection.</Alert>
 {/if}
-
 ---
 
-## Top Agencies with funding for IT — Trend Over Time
+## Top Agencies by Budget — Trend Over Time
 
 {#if agency_trend_lines?.length > 0}
     <AgencyTrendChart
@@ -897,12 +818,13 @@ order by agency_name, fiscal_year
         height="520px"
     />
 {:else}
-    <Alert status=warning>No agency IT spend trend data available for this filter selection.</Alert>
+    <Alert status=warning>No agency trend data available for this filter selection.</Alert>
 {/if}
 
 ---
 
-## Agency IT Spending by Year — Click on Agency to drill to its specific page
+## Agency Budget by Year 
+#### Click on Agency row to drill to its specific Page
 
 <div style="display:flex; gap:8px; margin: 8px 0 14px 0;">
     {#each [['3y','Last 3 Years'],['5y','Last 5 Years'],['all','All Years']] as [val, label]}
@@ -961,7 +883,7 @@ order by agency_name, fiscal_year
     </table>
 </div>
 {:else}
-    <Alert status=warning>No agency IT spend data available for this filter selection.</Alert>
+    <Alert status=warning>No agency data available for this filter selection.</Alert>
 {/if}
 
 {/if}

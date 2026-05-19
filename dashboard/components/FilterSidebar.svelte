@@ -4,11 +4,14 @@
 
     function scrollToFilters() {
         const el = document.getElementById(targetId);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            const details = el.querySelector('details');
-            if (details) details.open = true;
-        }
+        if (!el) return;
+
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        setTimeout(() => {
+            const btn = el.querySelector('button');
+            if (btn) btn.click();
+        }, 600);
     }
 </script>
 
